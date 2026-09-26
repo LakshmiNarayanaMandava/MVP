@@ -1,10 +1,8 @@
 from fastapi import FastAPI, HTTPException
-from scoring import load_merged_data, get_user, calculate_score
 
+from database import get_user, save_score, create_scores_table
+from scoring import calculate_score
 
-# ============================================================
-# CREATE FASTAPI APPLICATION
-# ============================================================
 
 app = FastAPI(
     title="New-Age Credit Scoring API",
@@ -13,56 +11,46 @@ app = FastAPI(
 )
 
 
-# ============================================================
-# LOAD DATA
-# ============================================================
+# Create scores table when API starts
+create_scores_table()
 
-DATA_FILE = "data/merged_data.json"
-
-data = load_merged_data(DATA_FILE)
-
-
-# ============================================================
-# ROOT ENDPOINT
-# ============================================================
 
 @app.get("/")
 def home():
+
     return {
         "message": "New-Age Credit Scoring API is running"
     }
 
 
-# ============================================================
-# CREDIT SCORE ENDPOINT
-# ============================================================
-
 @app.get("/score/{user_id}")
 def get_credit_score(user_id: str):
 
-    try:
+    # 1. Get user from database
+    user = get_user(user_id)
 
-        # Find user
-        user = get_user(
-            data,
-            user_id
-        )
-
-        # Calculate score
-        final_score, breakdown = calculate_score(
-            user
-        )
-
-        # Return response
-        return {
-            "user_id": user_id,
-            "credit_score": final_score,
-            "breakdown": breakdown
-        }
-
-    except ValueError:
+    # 2. Check whether user exists
+    if user is None:
 
         raise HTTPException(
             status_code=404,
             detail=f"User {user_id} not found"
         )
+
+    # 3. Calculate credit score
+    final_score, breakdown = calculate_score(user)
+
+    # 4. Store score in database
+    save_score(
+        user_id,
+        final_score,
+        breakdown
+    )
+
+    # 5. Return response
+    return {
+        "user_id": user_id,
+        "credit_score": final_score,
+        "breakdown": breakdown,
+        "message": "Score calculated and stored successfully"
+    }
