@@ -1,0 +1,5 @@
+product_id,product_name,min_score,type,interest_rate
+P_01,Starter Credit Card,350.0,Credit Card,12.0
+P_02,Micro-Loan Lite,550.0,Loan,17.0
+P_03,Standard Credit Card,650.0,Credit Card,18.0
+P_04,Premium Personal Loan,750.0,Loan,11.0
